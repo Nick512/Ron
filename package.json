@@ -1,0 +1,15 @@
+{
+	"name": "ron",
+	"version": "1.0.0",
+	"description": "ron bot",
+	"main": "index.js",
+	"scripts": {
+		"ron": "node index.js"
+	},
+	"author": "Dimensione",
+	"license": "ISC",
+	"dependencies": {
+		"discord.js": "^12.5.1",
+		"dotenv": "^8.2.0"
+	}
+}
