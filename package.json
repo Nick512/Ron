@@ -4,12 +4,13 @@
 	"description": "ron bot",
 	"main": "index.js",
 	"scripts": {
-		"ron": "node index.js"
+		"ron": "nodemon index.js"
 	},
 	"author": "Dimensione",
 	"license": "ISC",
 	"dependencies": {
 		"discord.js": "^12.5.1",
-		"dotenv": "^8.2.0"
+		"dotenv": "^8.2.0",
+		"mongoose": "^5.11.12"
 	}
 }
