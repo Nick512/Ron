@@ -14,6 +14,7 @@ mongoose
 
 //discord init
 const Discord = require("discord.js")
+const scd = require("./models/scd")
 const client = new Discord.Client()
 client.login(process.env.botToken)
 let prefix = "."
@@ -30,11 +31,19 @@ client.on("message", (msg) => {
 		msg.channel.send("hey")
 	}
 
+	if (msg.content === "SD?") {
+		msg.channel.send("SD pog")
+	}
+
+	if (msg.content === "femboy?") {
+		msg.channel.send("@Santio hey")
+	}
+
 	if (msg.content === "Ron") {
 		msg.channel.send("hey")
 	}
 
-	if (msg.content === "clown") {
+	if (msg.content === "MTF?") {
 		msg.channel.send("ewww")
 	}
 
@@ -44,10 +53,6 @@ client.on("message", (msg) => {
 
 	if (msg.mentions.has(client.user.id)) {
 		msg.channel.send("<:ping:796217123982278687>")
-	}
-
-	if (msg.content === "promotion") {
-		msg.channel.send("give")
 	}
 
 	if (msg.content === "promotion") {
@@ -83,16 +88,7 @@ client.on("message", (msg) => {
 				msg.channel.send("<:blue:785702340975788063>")
 				break
 
-			case "pogcheck":
-				if (
-					msg.content.slice(1).split(" ")[1] === "Dimensione" ||
-					"DaRealBrine"
-				) {
-					msg.channel.send("pog")
-				} else {
-					msg.channel.send("unpog")
-				}
-				break
+			
 
 			case "grade":
 				if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
@@ -100,57 +96,62 @@ client.on("message", (msg) => {
 					break
 				}
 
-				
-
-				
 
 				const userID = msg.content.slice(1).split(" ")[1]
 
 				ScD.findOne({ userID: userID }).then( (user) => {
 					if (!user) {
 						const scd = new ScD({
-							userID: userID
+							userID: userID,
+							points: parseInt(msg.content.slice(1).split(" ")[2]),
+							grades: [msg.content.slice(1).split(" ")[2]]
 						})
 						scd.save()
 						console.log('ScD made')
+						msg.channel.send("I gave them " + msg.content.slice(1).split(" ")[2] + " points")
 					}
 
-					if (msg.content.slice(1).split(" ")[2].toLocaleLowerCase() === 'valid') {
-						user.validTests++
-						user.save()
-					} else if (msg.content.slice(1).split(" ")[2].toLocaleLowerCase() === 'invalid') {
-						user.invalidTests++
-						user.save()
-					} else if (msg.content.slice(1).split(" ")[2].toLocaleLowerCase() === 'quality') {
-						user.qualityTests++
-						user.save()
-					} else if (msg.content.slice(1).split(" ")[2].toLocaleLowerCase() === 'excellence') {
-						user.excellentTests++
-						user.save()
-					} else {
-						msg.channel.send('Grade level not a real level')
+		
+					if (user) {
+						if (!isNaN(msg.content.slice(1).split(" ")[2])) {
+							user.points += parseInt(msg.content.slice(1).split(" ")[2])
+							user.grades.push(msg.content.slice(1).split(" ")[2])
+							user.save()
+							msg.channel.send("I gave them " + msg.content.slice(1).split(" ")[2] + " points")
+						}
+
 					}
+					
+
+					
 
 				})
 				
 				
 
 				break
-
-			case 'file':
-				const findID = msg.content.slice(1).split(" ")[1]
-				ScD.findOne({ userID: findID }).then( (user) => {
-					if (!user) {
-						msg.channel.send("Who?")	
-					}
-				
-					msg.channel.send(`Invalid reports: ${user.invalidTests}\nValid reports: ${user.validTests}\nQuality reports: ${user.qualityTests}\nExcellent reports: ${user.excellentTests}` )
-				
-				})
-
 
 			
+			case 'grades':
+				ScD.findOne({ userID: msg.content.slice(1).split(" ")[1] }).then( (user) => {
+					if (user) {
+						let points = user.grades
+						msg.channel.send(user.grades)	
+					}
+
+				})
 				break
+
+			case 'points':
+				ScD.findOne({ userID: msg.content.slice(1).split(" ")[1] }).then( (user) => {
+					if (user) {
+						let points = user.points
+						msg.channel.send(user.points)	
+					}
+	
+				})
+				break
+			
 			default:
 				msg.channel.send("invalid command")
 		}

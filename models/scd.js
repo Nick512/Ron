@@ -7,22 +7,14 @@ const ScDSchema = new Schema({
 		type: String,
 		required: true,
 	},
-	invalidTests: {
+	points: {
 		type: Number,
-		default: 0,
+		default: 0
 	},
-	validTests: {
-		type: Number,
-		default: 0,
-	},
-	qualityTests: {
-		type: Number,
-		default: 0,
-	},
-	excellentTests: {
-		type: Number,
-		default: 0,
-	},
+	grades: { 
+		type: Array,
+		default: []
+	}
 })
 
 module.exports = ScD = mongoose.model("ScD", ScDSchema)
