@@ -1,206 +1,302 @@
 const ScD = require("../models/scd")
-const { users } = require("./login")
+const Discord = require("discord.js")
+const client = require("./login")
 
-let prefix = "."
+//Get user funtion
+function getUserFromMention(mention) {
+    if (!mention) return
+
+    if (mention.startsWith("<@") && mention.endsWith(">")) {
+        mention = mention.slice(2, -1)
+
+        if (mention.startsWith("!")) {
+            mention = mention.slice(1)
+        }
+
+        return client.users.cache.get(mention)
+    }
+}
 
 function commands(msg) {
-    if (msg.content.substring(0, 1) === prefix) {
-        let command = msg.content.slice(1).split(" ")
+    let args = msg.content.slice(1).split(" ")
 
-        switch (command[0]) {
-            case "help":
-                msg.channel.send("no commands yet")
+    switch (args[0]) {
+        case "help":
+            msg.channel.send(
+                new Discord.MessageEmbed()
+                    .setTitle("Ron's Commands")
+                    .setDescription(
+                        `.docs [scp #] - Gives the Wiki page for the SCP
+                        .poll - Show a poll
+                            .grade [player] [grade] - Gives player points and grade from test
+                            .removegrade [player] [grade] - Removes grade from player
+                            .editgrade [player] [old grade] [new grade] - Modifies a player grade
+                            .addpoints [player] [points] - Adds points to player without affecting grades
+                            .removepoints [player] [points] - Removes points from player without affecting grades
+                            `
+                    )
+                    .setColor("#fcba03")
+            )
+            break
+
+        case "poll":
+            //HR role check
+            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
+                msg.channel.send("Imagine not being hr")
                 break
+            }
+            msg.channel
+                .send(
+                    new Discord.MessageEmbed()
+                        .setColor("#f5bf42")
+                        .setTitle("ScD poll (by: " + msg.member.user.tag + ")")
+                        .setDescription(msg.content.substring(6))
+                        .setFooter("Vote below")
+                )
+                .then((sentEmbed) => {
+                    sentEmbed.react("👍")
+                    sentEmbed.react("👎")
+                })
+            msg.delete()
+            break
+        case "docs":
+            if (!isNaN(args[1]) && args[1] < 9999) {
+                msg.channel.send("http://www.scpwiki.com/scp-" + args[1])
+            } else {
+                msg.channel.send("give me an scp number")
+            }
+            break
 
-            case "docs":
-                if (!isNaN(command[1])) {
-                    msg.channel.send("http://www.scpwiki.com/scp-" + command[1])
-                } else {
-                    msg.channel.send("give me an scp number")
-                }
+        case "blue":
+            msg.delete()
+            msg.channel.send("<:blue:785702340975788063>")
+            break
+
+        case "grade":
+            //HR role check
+            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
+                msg.channel.send("Imagine not being hr")
                 break
+            }
 
-            case "blue":
-                msg.channel.send("<:blue:785702340975788063>")
-                break
+            const userID = args[1]
 
-            case "grade":
-                //HR role check
-                if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                    msg.channel.send("Imagine not being hr")
-                    break
-                }
-
-                const userID = command[1]
-
-                try {
-                    //Argument check
-                    if (userID != null) {
-                        ScD.findOne({
+            //Argument check
+            if (userID != null) {
+                ScD.findOne({
+                    userID: userID,
+                }).then((user) => {
+                    if (!user) {
+                        //if no user then create user and give them points and grade
+                        const scd = new ScD({
                             userID: userID,
-                        }).then((user) => {
-                            if (!user) {
-                                //if no user then create user and give them points and grade
-                                const scd = new ScD({
-                                    userID: userID,
-                                    points: parseInt(command[2]),
-                                    grades: [command[2]],
-                                })
-                                scd.save()
-                                console.log("ScD made")
-                                msg.channel.send(`I gave them ${command[2]} points`)
-                            }
-
-                            if (user) {
-                                //add points and grade to user
-                                if (!isNaN(command[2])) {
-                                    user.points += parseInt(command[2])
-                                    user.grades.push(command[2])
-                                    user.save()
-                                    msg.channel.send(`I gave them ${command[2]} points`)
-                                }
-                            }
+                            points: 0,
+                            grades: [parseInt(args[2])],
                         })
-                    } else {
-                        msg.channel.send("Who you want to be graded?")
+                        scd.save()
+                        console.log("ScD made")
+                        msg.channel.send(
+                            new Discord.MessageEmbed()
+                                .setDescription(`Test score of ${args[2]} given to ${args[1]}`)
+                                .setColor("#009900")
+                        )
+                        msg.delete()
                     }
-                } catch (err) {
-                    console.log(err)
-                }
-                break
 
-            case "addpoints":
-                //HR role check
-                if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                    msg.channel.send("Imagine not being hr")
-                    break
-                }
-
-                //Find ScD and give points but not add a grade to grades list
-                ScD.findOne({ userID: command[1] }).then((user) => {
-                    if (user && !isNaN(command[2])) {
-                        user.points += parseInt(command[2])
-                        user.save()
-                        msg.channel.send(`I gave them ${command[2]} points`)
-                    } else {
-                        msg.channel.send("Usage: .addpoints player points")
-                    }
-                })
-                break
-
-            case "removepoints":
-                //HR role check
-                if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                    msg.channel.send("Imagine not being hr")
-                    break
-                }
-
-                //Find player and remove points
-                ScD.findOne({ userID: command[1] }).then((user) => {
-                    if (user && !isNaN(command[2])) {
-                        user.points -= parseInt(command[2])
-                        user.save()
-                        msg.channel.send(`I took away ${command[2]} points`)
-                    } else {
-                        msg.channel.send("Usage: .removepoints player points")
-                    }
-                })
-                break
-
-            case "removegrade":
-                //HR role check
-                if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                    msg.channel.send("Imagine not being hr")
-                    break
-                }
-
-                //Find player and remove grade and points
-                ScD.findOne({ userID: command[1] }).then((user) => {
-                    if (user && !isNaN(command[2])) {
-                        if (user.grades.includes(command[2])) {
-                            user.grades.splice(user.grades.lastIndexOf(command[2], 1))
-                            user.points -= parseInt(command[2])
-                            user.save()
-                            msg.channel.send(`I took away ${command[2]} points and removed that grade`)
-                        } else {
-                            msg.channel.send("They don't have that grade")
-                        }
-                    } else {
-                        msg.channel.send("Usage: .removegrade player grade")
-                    }
-                })
-                break
-
-            case "editgrade":
-                //HR role check
-                if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                    msg.channel.send("Imagine not being hr")
-                    break
-                }
-
-                //Find player and remove grade and points
-                ScD.findOne({ userID: command[1] }).then((user) => {
-                    if (user && !isNaN(command[2]) && !isNaN(command[3])) {
-                        if (user.grades.includes(command[2])) {
-                            user.grades.splice(user.grades.lastIndexOf(command[2], 1))
-                            user.grades.push(command[3])
-
-                            if (command[2] > command[3]) {
-                                user.points -= parseInt(command[2] - command[3])
-                            }
-                            if (command[2] < command[3]) {
-                                user.points += parseInt(command[3] - command[2])
-                            }
-                            user.save()
-                            msg.channel.send(`Grade modified`)
-                        } else {
-                            msg.channel.send("They don't have that grade")
-                        }
-                    } else {
-                        msg.channel.send("Usage: .removegrade player grade")
-                    }
-                })
-                break
-
-            case "grades":
-                // If no user specified let user be the author
-                if (command[1] == undefined) {
-                    command[1] = "<@!" + msg.author.id + ">"
-                }
-                //Find ScD and return grade list
-                ScD.findOne({ userID: command[1] }).then((user) => {
                     if (user) {
-                        if (user.grades[0]) {
-                            msg.channel.send(user.grades)
-                        } else {
-                            msg.channel.send("They have no grades yet")
+                        //add grade to user
+                        if (!isNaN(args[2])) {
+                            user.grades.push(parseInt(args[2]))
+                            user.save()
+                            msg.channel.send(
+                                new Discord.MessageEmbed()
+                                    .setDescription(`Test score of ${args[2]} given to ${args[1]}`)
+                                    .setColor("#009900")
+                            )
+                            msg.delete()
                         }
-                    } else {
-                        msg.channel.send("Who?")
                     }
                 })
-                break
+            } else {
+                msg.channel.send("Who you want to be graded?")
+            }
+            break
 
-            case "points":
-                // If no user specified let user be the author
-                if (command[1] == undefined) {
-                    command[1] = "<@!" + msg.author.id + ">"
+        case "addpoints":
+            //HR role check
+            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
+                msg.channel.send("Imagine not being hr")
+                break
+            }
+
+            //Find ScD and give points but not add a grade to grades list
+            ScD.findOne({ userID: args[1] }).then((user) => {
+                if (user && !isNaN(args[2])) {
+                    user.points += parseInt(args[2])
+                    user.save()
+                    msg.channel.send(
+                        new Discord.MessageEmbed()
+                            .setDescription(`${args[2]} points added to ${args[1]}`)
+                            .setColor("#009900")
+                    )
+                } else {
+                    msg.channel.send(
+                        new Discord.MessageEmbed().setDescription(`Usage: .addpoints player points`).setColor("#999900")
+                    )
                 }
+            })
+            break
 
-                //Find ScD and return points
-                ScD.findOne({ userID: command[1] }).then((user) => {
-                    if (user) {
-                        msg.channel.send(user.points)
-                    } else {
-                        msg.channel.send("Who?")
-                    }
-                })
-
+        case "removepoints":
+            //HR role check
+            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
+                msg.channel.send("Imagine not being hr")
                 break
+            }
 
-            default:
-                msg.channel.send("invalid command")
-        }
+            //Find player and remove points
+            ScD.findOne({ userID: args[1] }).then((user) => {
+                if (user && !isNaN(args[2])) {
+                    user.points -= parseInt(args[2])
+                    user.save()
+                    msg.channel.send(
+                        new Discord.MessageEmbed()
+                            .setDescription(`Removed ${args[2]} points from ${args[1]}`)
+                            .setColor("#009900")
+                    )
+                } else {
+                    msg.channel.send(
+                        new Discord.MessageEmbed()
+                            .setDescription(`Usage: .removegrade player points`)
+                            .setColor("#999900")
+                    )
+                }
+            })
+            break
+
+        case "removegrade":
+            //HR role check
+            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
+                msg.channel.send("Imagine not being hr")
+                break
+            }
+
+            //Find player and remove grade and points
+            ScD.findOne({ userID: args[1] }).then((user) => {
+                if (user && !isNaN(args[2])) {
+                    if (user.grades.includes(args[2])) {
+                        user.grades.splice(user.grades.lastIndexOf(parseInt(args[2], 1)))
+                        user.save()
+                        msg.channel.send(
+                            new Discord.MessageEmbed()
+                                .setDescription(`Removed grade ${args[2]} from ${args[1]}`)
+                                .setColor("#009900")
+                        )
+                    } else {
+                        msg.channel.send(
+                            new Discord.MessageEmbed()
+                                .setDescription(`Player does not have that grade`)
+                                .setColor("#990000")
+                        )
+                    }
+                } else {
+                    msg.channel.send(
+                        new Discord.MessageEmbed()
+                            .setDescription(`Usage: .removegrade player grade`)
+                            .setColor("#999900")
+                    )
+                }
+            })
+            break
+
+        case "editgrade":
+            //HR role check
+            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
+                msg.channel.send("Imagine not being hr")
+                break
+            }
+
+            //Find player and edit grade
+            ScD.findOne({ userID: args[1] }).then((user) => {
+                if (user && !isNaN(args[2]) && !isNaN(args[3])) {
+                    if (user.grades.includes(args[2])) {
+                        user.grades.splice(user.grades.lastIndexOf(parseInt(args[2], 1)))
+                        user.grades.push(parseInt(args[3]))
+
+                        user.save()
+                        msg.channel.send(
+                            new Discord.MessageEmbed()
+                                .setDescription(`Grade Modifed: ${args[2]} to ${args[3]} for ${args[1]}`)
+                                .setColor("#009900")
+                        )
+                        msg.delete()
+                    } else {
+                        msg.channel.send(
+                            new Discord.MessageEmbed()
+                                .setDescription(`Player does not have that grade`)
+                                .setColor("#990000")
+                        )
+                    }
+                } else {
+                    msg.channel.send(
+                        new Discord.MessageEmbed()
+                            .setDescription(`Usage: .editgrade player oldGrade newGrade`)
+                            .setColor("#999900")
+                    )
+                }
+            })
+            break
+
+        case "grades":
+            // If no user specified let user be the author
+            if (args[1] == undefined) {
+                args[1] = "<@!" + msg.author.id + ">"
+            }
+            //Find ScD and return grade list and additonal points
+            ScD.findOne({ userID: args[1] }).then((user) => {
+                if (user) {
+                    if (user.grades[0]) {
+                        const scd = getUserFromMention(args[1])
+                        msg.channel.send(
+                            new Discord.MessageEmbed()
+                                .setColor("#009900")
+                                .setTitle(`${scd.tag}'s grades`)
+                                .setDescription(`Grades: ${user.grades.join(", ")} \n Additonal Points: ${user.points}`)
+                        )
+                    } else {
+                        msg.channel.send("They have no grades yet")
+                    }
+                } else {
+                    msg.channel.send("Who?")
+                }
+            })
+            break
+
+        case "points":
+            // If no user specified let user be the author
+            if (args[1] == undefined) {
+                args[1] = "<@!" + msg.author.id + ">"
+            }
+
+            //Find ScD and return points
+            ScD.findOne({ userID: args[1] }).then((user) => {
+                if (user) {
+                    const scd = getUserFromMention(args[1])
+                    msg.channel.send(
+                        new Discord.MessageEmbed()
+                            .setColor("#009900")
+                            .setTitle(`${scd.tag}'s points`)
+                            .setDescription(`${user.points + user.grades.reduce((a, b) => a + b, 0)}`)
+                    )
+                } else {
+                    msg.channel.send("Who?")
+                }
+            })
+
+            break
+
+        default:
+            msg.channel.send("invalid command")
     }
 }
 
