@@ -17,6 +17,13 @@ function getUserFromMention(mention) {
     }
 }
 
+function hrCheck(msg) {
+    if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
+        msg.channel.send("Imagine not being hr")
+        return true
+    }
+}
+
 function commands(msg) {
     let args = msg.content.slice(1).split(" ")
 
@@ -41,10 +48,11 @@ function commands(msg) {
 
         case "poll":
             //HR role check
-            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                msg.channel.send("Imagine not being hr")
+            if (hrCheck(msg)) {
                 break
             }
+
+            //send poll embed
             msg.channel
                 .send(
                     new Discord.MessageEmbed()
@@ -59,7 +67,9 @@ function commands(msg) {
                 })
             msg.delete()
             break
+
         case "docs":
+            //Vaidate scp # and send link appened with number
             if (!isNaN(args[1]) && args[1] < 9999) {
                 msg.channel.send("http://www.scpwiki.com/scp-" + args[1])
             } else {
@@ -68,26 +78,37 @@ function commands(msg) {
             break
 
         case "blue":
+            // dnt worry about this one
             msg.delete()
             msg.channel.send("<:blue:785702340975788063>")
             break
 
         case "grade":
             //HR role check
-            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                msg.channel.send("Imagine not being hr")
+            if (hrCheck(msg)) {
                 break
             }
 
-            const userID = args[1]
-
             //Argument check
-            if (userID != null) {
+            if (args[1] != null) {
                 ScD.findOne({
-                    userID: userID,
+                    userID: args[1],
                 }).then((user) => {
-                    if (!user) {
-                        //if no user then create user and give them points and grade
+                    //add grade to user if user exsists
+                    if (user && !isNaN(args[2])) {
+                        user.grades.push(parseInt(args[2]))
+                        user.save()
+                        msg.channel.send(
+                            new Discord.MessageEmbed()
+                                .setDescription(`Test score of ${args[2]} given to ${args[1]}`)
+                                .setColor("#009900")
+                        )
+                        msg.delete()
+                        return
+                    }
+
+                    if (!user && !isNaN(args[2])) {
+                        //if no user then create user and give them grade
                         const scd = new ScD({
                             userID: userID,
                             points: 0,
@@ -101,36 +122,24 @@ function commands(msg) {
                                 .setColor("#009900")
                         )
                         msg.delete()
-                    }
-
-                    if (user) {
-                        //add grade to user
-                        if (!isNaN(args[2])) {
-                            user.grades.push(parseInt(args[2]))
-                            user.save()
-                            msg.channel.send(
-                                new Discord.MessageEmbed()
-                                    .setDescription(`Test score of ${args[2]} given to ${args[1]}`)
-                                    .setColor("#009900")
-                            )
-                            msg.delete()
-                        }
+                        return
                     }
                 })
             } else {
                 msg.channel.send("Who you want to be graded?")
             }
+
             break
 
         case "addpoints":
             //HR role check
-            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                msg.channel.send("Imagine not being hr")
+            if (hrCheck(msg)) {
                 break
             }
 
             //Find ScD and give points but not add a grade to grades list
             ScD.findOne({ userID: args[1] }).then((user) => {
+                //If user already exists them add points to their total
                 if (user && !isNaN(args[2])) {
                     user.points += parseInt(args[2])
                     user.save()
@@ -139,18 +148,34 @@ function commands(msg) {
                             .setDescription(`${args[2]} points added to ${args[1]}`)
                             .setColor("#009900")
                     )
-                } else {
-                    msg.channel.send(
-                        new Discord.MessageEmbed().setDescription(`Usage: .addpoints player points`).setColor("#999900")
-                    )
+                    return
                 }
+
+                if (!user && !isNaN(args[2])) {
+                    //if no user then create user and give them points
+                    const scd = new ScD({
+                        userID: args[1],
+                        points: parseInt(args[2]),
+                    })
+                    scd.save()
+                    msg.channel.send(
+                        new Discord.MessageEmbed()
+                            .setDescription(`${args[2]} points added to ${args[1]}`)
+                            .setColor("#009900")
+                    )
+                    msg.delete()
+                    return
+                }
+                msg.channel.send(
+                    new Discord.MessageEmbed().setDescription(`Usage: .addpoints player points`).setColor("#999900")
+                )
             })
+
             break
 
         case "removepoints":
             //HR role check
-            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                msg.channel.send("Imagine not being hr")
+            if (hrCheck(msg)) {
                 break
             }
 
@@ -176,8 +201,7 @@ function commands(msg) {
 
         case "removegrade":
             //HR role check
-            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                msg.channel.send("Imagine not being hr")
+            if (hrCheck(msg)) {
                 break
             }
 
@@ -211,8 +235,7 @@ function commands(msg) {
 
         case "editgrade":
             //HR role check
-            if (!msg.member.roles.cache.find((r) => r.name === "HR")) {
-                msg.channel.send("Imagine not being hr")
+            if (hrCheck(msg)) {
                 break
             }
 
