@@ -290,7 +290,7 @@ function commands(msg) {
                         msg.channel.send("They have no grades yet")
                     }
                 } else {
-                    msg.channel.send("Who?")
+                    msg.channel.send("idk you, you probly don't have any points yet")
                 }
             })
             break
@@ -312,7 +312,7 @@ function commands(msg) {
                             .setDescription(`${user.points + user.grades.reduce((a, b) => a + b, 0)}`)
                     )
                 } else {
-                    msg.channel.send("Who?")
+                    msg.channel.send("idk you, you probly don't have any points yet")
                 }
             })
 
