@@ -110,7 +110,7 @@ function commands(msg) {
                     if (!user && !isNaN(args[2])) {
                         //if no user then create user and give them grade
                         const scd = new ScD({
-                            userID: userID,
+                            userID: args[1],
                             points: 0,
                             grades: [parseInt(args[2])],
                         })
