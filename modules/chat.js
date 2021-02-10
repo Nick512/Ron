@@ -6,12 +6,12 @@ function chatReactions(msg) {
         return
     }
 
-    switch (msg.content) {
-        case "hey Ron":
+    switch (msg.content.tolowercase()) {
+        case "hey ron":
             msg.channel.send("hey")
             break
 
-        case "SD?":
+        case "sd?":
             msg.channel.send("SD pog")
             break
 
@@ -19,11 +19,11 @@ function chatReactions(msg) {
             msg.channel.send("@Santio hey")
             break
 
-        case "Ron":
+        case "ron":
             msg.channel.send("hey")
             break
 
-        case "MTF?":
+        case "mtf?":
             msg.channel.send("ewww")
             break
 
@@ -34,15 +34,6 @@ function chatReactions(msg) {
         case "promotion":
             msg.channel.send("give")
             break
-
-        // case "hey ron, are you connected to a database":
-        //     if (mongoose.connection.readyState) {
-        //         msg.channel.send("yes")
-        //         break
-        //     } else {
-        //         msg.channel.send("no")
-        //         break
-        //     }
     }
 }
 

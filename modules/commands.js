@@ -274,6 +274,7 @@ function commands(msg) {
             // If no user specified let user be the author
             if (args[1] == undefined) {
                 args[1] = "<@!" + msg.author.id + ">"
+                args[2] = true
             }
             //Find ScD and return grade list and additonal points
             ScD.findOne({ userID: args[1] }).then((user) => {
@@ -290,7 +291,7 @@ function commands(msg) {
                         msg.channel.send("They have no grades yet")
                     }
                 } else {
-                    msg.channel.send("idk you, you probly don't have any points yet")
+                    msg.channel.send(`${args[2] ? "You" : "They"} have no points`)
                 }
             })
             break
@@ -299,6 +300,7 @@ function commands(msg) {
             // If no user specified let user be the author
             if (args[1] == undefined) {
                 args[1] = "<@!" + msg.author.id + ">"
+                args[2] = true
             }
 
             //Find ScD and return points
@@ -312,7 +314,7 @@ function commands(msg) {
                             .setDescription(`${user.points + user.grades.reduce((a, b) => a + b, 0)}`)
                     )
                 } else {
-                    msg.channel.send("idk you, you probly don't have any points yet")
+                    msg.channel.send(`${args[2] ? "You" : "They"} have no points`)
                 }
             })
 
