@@ -320,6 +320,28 @@ function commands(msg) {
 
             break
 
+        case "leaderboard":
+            ScD.find({}, function (err, scds) {
+                scds.sort((a, b) => (a.points < b.points ? 1 : -1))
+
+                msg.channel.send(
+                    new Discord.MessageEmbed().setColor("#009900").setTitle(`ScD Points Leaderboard`).setDescription(`
+                        1. ${scds[0].userID} - ${scds[0].points} points
+                        2. ${scds[1].userID} - ${scds[1].points} points
+                        3. ${scds[2].userID} - ${scds[2].points} points
+                        4. ${scds[3].userID} - ${scds[3].points} points
+                        5. ${scds[4].userID} - ${scds[4].points} points
+                        6. ${scds[5].userID} - ${scds[5].points} points
+                        7. ${scds[6].userID} - ${scds[6].points} points
+                        8. ${scds[7].userID} - ${scds[7].points} points
+                        9. ${scds[8].userID} - ${scds[8].points} points
+                        10. ${scds[9].userID} - ${scds[9].points} points
+                        `)
+                )
+            })
+
+            break
+
         default:
             msg.channel.send("invalid command")
     }
